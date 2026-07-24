@@ -1,4 +1,6 @@
 # Owner(s): ["oncall: distributed"]
+import unittest
+
 import torch
 import torch.distributed._functional_collectives as funcol
 import torch.distributed.tensor._random as random
@@ -8,7 +10,12 @@ from torch.distributed.tensor import Replicate
 from torch.distributed.tensor.parallel.api import parallelize_module
 from torch.distributed.tensor.parallel.style import ColwiseParallel
 from torch.testing._internal.common_distributed import skip_if_lt_x_gpu
-from torch.testing._internal.common_utils import run_tests
+from torch.testing._internal.common_utils import (
+    run_tests,
+    TEST_CUDA,
+    TEST_HPU,
+    TEST_XPU
+)
 from torch.testing._internal.distributed._tensor.common_dtensor import (
     create_local_tensor_test_class,
     DTensorTestBase,
@@ -40,6 +47,10 @@ class TensorParallelRandomStateTests(DTensorTestBase):
 
     @with_comms
     @skip_if_lt_x_gpu(4)
+    @unittest.skipIf(
+        not (TEST_CUDA or TEST_HPU or TEST_XPU),
+        "TP random state requires a backend that supports split_group"
+    )
     def test_model_init(self):
         dp_size = 2
         tp_size = self.world_size // dp_size
